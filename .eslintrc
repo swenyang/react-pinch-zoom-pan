@@ -5,6 +5,8 @@
     "node": true
   },
   "rules": {
+    "indent": [1, 4],
+    "space-before-function-paren": [0]
   },
   "plugins": [
     "react", "standard"

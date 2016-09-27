@@ -4,6 +4,8 @@
     "transform-runtime",
     "add-module-exports",
     "transform-decorators-legacy",
-    "transform-react-display-name"
+    "transform-react-display-name",
+    "transform-class-properties",
+    "transform-object-rest-spread"
   ]
 }
