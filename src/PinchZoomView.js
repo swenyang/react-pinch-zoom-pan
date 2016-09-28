@@ -1,12 +1,13 @@
 import React, {Component, PropTypes} from 'react'
+import autoPrefix from 'react-prefixr'
 
-function isTouch() {
+const isTouch = () => {
     return (('ontouchstart' in window) ||
     (navigator.maxTouchPoints > 0) ||
     (navigator.msMaxTouchPoints > 0))
 }
 
-function hasTwoTouchPoints(event) {
+const hasTwoTouchPoints = (event) => {
     if (isTouch()) {
         return event.touches && event.touches.length === 2
     } else {
@@ -14,11 +15,11 @@ function hasTwoTouchPoints(event) {
     }
 }
 
-function between(min, max, val) {
+const between = (min, max, val) => {
     return Math.min(max, Math.max(min, val))
 }
 
-function normalizeTouch(e) {
+const normalizeTouch = (e) => {
     const p = isTouch() ? e.touches[0] : e
     return {
         x: p.clientX,
@@ -26,21 +27,27 @@ function normalizeTouch(e) {
     }
 }
 
-function translatePos(point, size) {
+const translatePos = (point, size) => {
     return {
         x: (point.x - (size.width / 2)),
         y: (point.y - (size.height / 2))
     }
 }
 
-class ReactPinchZoomPan extends Component {
-    static defaultProps = {
-        maxScale: 2
+class PinchZoomView extends Component {
+    static propTypes = {
+        containerRatio: PropTypes.number,
+        maxScale: PropTypes.number,
+        children: PropTypes.element,
+        backgroundColor: PropTypes.string,
+        debug: PropTypes.bool
     }
 
-    static propTypes = {
-        render: PropTypes.func,
-        maxScale: PropTypes.number
+    static defaultProps = {
+        maxScale: 2,
+        containerRatio: 100,
+        backgroundColor: '#f2f2f2',
+        debug: false
     }
 
     constructor(props) {
@@ -122,18 +129,75 @@ class ReactPinchZoomPan extends Component {
         window.addEventListener(isTouch() ? 'touchend' : 'mouseup', this.onTouchEnd)
     }
 
-    render() {
-        const { scale, x, y } = this.state
+    getContainerStyle() {
+        const { backgroundColor, containerRatio } = this.props
+        return {
+            paddingTop: containerRatio.toFixed(2) + '%',
+            overflow: 'hidden',
+            position: 'relative',
+            background: backgroundColor
+        }
+    }
+
+    getInnerStyle() {
+        return {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0
+        }
+    }
+
+    getHolderStyle() {
+        return {
+            position: 'relative'
+        }
+    }
+
+    getContentStyle(obj) {
+        return {
+            width: '100%',
+            height: '100%',
+            align: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            transform: `scale(${obj.scale}) translateY(${obj.y}px) translateX(${obj.x}px)`,
+            transition: '.3s ease-out'
+        }
+    }
+
+    renderDebug(obj) {
         return (
-            <div ref='root'>
-                {this.props.render({
-                    x: x.toFixed(2),
-                    y: y.toFixed(2),
-                    scale: scale.toFixed(2)
-                })}
+            <div
+                style={{position: 'absolute', bottom: 0, left: 0, background: '#555', color: '#fff', padding: '3px 6px'}}>
+                Scale: {obj.scale}, X: {obj.x}, Y: {obj.y}
+            </div>
+        )
+    }
+
+    render() {
+        const { debug, children } = this.props
+        const displayData = {
+            x: this.state.x.toFixed(2),
+            y: this.state.y.toFixed(2),
+            scale: this.state.scale.toFixed(2)
+        }
+        return (
+            <div ref="root">
+                <div style={this.getHolderStyle()}>
+                    <div style={this.getContainerStyle()}>
+                        <div style={this.getInnerStyle()}>
+                            <div style={autoPrefix(this.getContentStyle(displayData))}>
+                                {children}
+                            </div>
+                        </div>
+                    </div>
+                    {debug && this.renderDebug(displayData)}
+                </div>
             </div>
         )
     }
 }
 
-export default ReactPinchZoomPan
+export default PinchZoomView

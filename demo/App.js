@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {PinchView} from '../src/index'
+import PinchZoomView from '../src/PinchZoomView'
 import './style.css'
 
 export default class App extends Component {
@@ -19,6 +19,7 @@ export default class App extends Component {
     }
 
     render () {
+        // images downloaded from http://lorempixel.com/600/400/nature/ and http://lorempixel.com/400/600/nature/ , I put it locally for debugging convenience
         return (
             <div className='container'>
                 <h1>Demo of react-pinch-zoom-pan</h1>
@@ -29,22 +30,22 @@ export default class App extends Component {
                 </p>
                 <h2>Horizontal Image</h2>
                 <p>containerRatio is set to the same ratio as the image: {this.state.ratio.toFixed(2)}</p>
-                <PinchView debug backgroundColor='#ddd' maxScale={4} containerRatio={this.state.ratio}>
+                <PinchZoomView debug backgroundColor='#ddd' maxScale={4} containerRatio={this.state.ratio}>
                     <img ref="image" src={require('./600x400.jpeg')} onLoad={this.onLoadImage} style={{
                         margin: 'auto',
                         width: '100%',
                         height: 'auto'
                     }} />
-                </PinchView>
+                </PinchZoomView>
                 <h2>Vertical Image</h2>
                 <p>Where ratio is set to containerRatio is set to 100 (equal height and width)</p>
-                <PinchView debug backgroundColor='#ddd' maxScale={3} containerRatio={100}>
+                <PinchZoomView debug backgroundColor='#ddd' maxScale={3} containerRatio={100}>
                     <img src={require('./400x600.jpeg')} style={{
                         margin: 'auto',
                         width: 'auto',
                         height: '100%'
                     }} />
-                </PinchView>
+                </PinchZoomView>
             </div>
         )
     }

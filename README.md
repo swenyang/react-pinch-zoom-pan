@@ -2,17 +2,28 @@
 
 A react component that lets you add pinch-zoom and pan sub components. On touch you can pinch-zoom and pan the zoomed image. On desktop you can 'pinch' by holding down your *ALT-key* and do a mousedown from center of inner content onto the edges.
 
-[See demo](http://gerhardsletten.github.io/react-pinch-zoom-pan/)
-
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
 
-## Install
+## Modifications
 
-`npm install react-pinch-zoom-pan`
+This repo forks from [ReactPinchZoomPan](https://github.com/gerhardsletten/react-pinch-zoom-pan), and make some modifications:
 
-## Usage 
+- Remove RxJS dependency, because it's too large for projects don't use it
+- Fix bugs that images can't be zoomed when you pinch them on Android devices
+- Fix translation behavior and translation boundary
+- Remove `lodash.throttle` and `resize()` event
+- Merge `PinchView` and `ReactPinchZoomPan` into one `PinchZoomView` component
+- Change code style to ES6
+- Remove ESLint temporarily
 
-Take a look at demo/App.js for usage, you can also run it in your local enviroment by 
+TODO:
+
+- Optimize pinch-zoom behavior
+- Add double-tap-to-zoom feature
+
+## Usage
+
+Take a look at demo/App.js for usage, you can also run it in your local enviroment by
 
 `npm install & npm start`
 
@@ -36,69 +47,3 @@ class App extends Component {
   }
 }
 ```
-
-### Usage underlaying zoom widget (PinchPanZoom)
-
-Take a look at demo/App.js for usage, you can also run it in your local enviroment by 
-
-`npm install & npm start`
-
-and open [localhost:3001](http://localhost:3001)
-
-```
-import React, {Component} from 'react'
-import s from 'react-prefixr'
-import {PinchPanZoom} from 'react-pinch-zoom-pan'
-
-export default class App extends Component {
-  
-  /* Use the css padding-top to make the container as high as inner content */
-  getContainerStyle(ratio) {
-    return {
-      paddingTop: ratio.toFixed(2) + '%',
-      overflow: 'hidden',
-      position: 'relative'
-    }
-  }
-
-  /* Position inner content absolute */
-  getInnerStyle() {
-    return {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0
-    }
-  }
-
-  render() {
-    const {height,width} = this.props
-    const ratio = (height / width) * 100
-    return (
-      <PinchPanZoom maxScale={2} render={obj => {
-        return (
-          <div style={this.getContainerStyle(ratio)}>
-            <div style={this.getInnerStyle()}>
-              <img 
-                src={`http://lorempixel.com/${width}/${height}/nature/`}
-                style={s({
-                  width: '100%', 
-                  height: 'auto', 
-                  transform: `scale(${obj.scale}) translateY(${obj.y}px) translateX(${obj.x}px)`,
-                  transition: '.3s ease'
-                })} />
-            </div>
-          </div>
-        )
-      }} />
-    )
-  }
-}
-```
-
-## Discussion
-
-* My experience with rxjs, see `src/ReactPinchPanZoom.js` if you have any suggestions and submit a pull request.
-
-Thanks to [Hugo Bessaa](https://github.com/hugobessaa) and [rx-react-pinch](https://github.com/hugobessaa/rx-react-pinch) for inital idea, but it had no support for panning and desktop.
