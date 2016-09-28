@@ -6,9 +6,10 @@ A react component that lets you add pinch-zoom and pan sub components. On touch 
 
 ## Modifications
 
-This repo forks from [ReactPinchZoomPan](https://github.com/gerhardsletten/react-pinch-zoom-pan), and make some modifications:
+This repo is forked from [ReactPinchZoomPan](https://github.com/gerhardsletten/react-pinch-zoom-pan), and I made some modifications:
 
 - Add double-tap-to-zoom feature
+- Add vertical scrolling feature
 - Fix bugs that images can't be zoomed when you pinch them on Android devices
 - Fix translation behavior and translation boundary
 - Remove RxJS dependency, because it's too large for projects don't use it

@@ -46,6 +46,15 @@ export default class App extends Component {
                         height: '100%'
                     }} />
                 </PinchZoomView>
+                <h2>Vertical Scrolling</h2>
+                <p>If the image is fit to the width and can be scrolled vertically</p>
+                <PinchZoomView debug backgroundColor='#ddd' maxScale={3} containerRatio={100} verticalScroll={true}>
+                    <img src={require('./400x600.jpeg')} style={{
+                        margin: 'auto',
+                        width: '100%',
+                        height: 'auto'
+                    }} />
+                </PinchZoomView>
             </div>
         )
     }

@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from 'react'
+import React, { Component, PropTypes } from 'react'
+import { findDOMNode } from 'react'
 import autoPrefix from 'react-prefixr'
 
 const isTouch = () => {
@@ -40,14 +41,16 @@ class PinchZoomView extends Component {
         maxScale: PropTypes.number,
         children: PropTypes.element,
         backgroundColor: PropTypes.string,
-        debug: PropTypes.bool
+        debug: PropTypes.bool,
+        verticalScroll: PropTypes.bool,
     }
 
     static defaultProps = {
         maxScale: 2,
         containerRatio: 100,
         backgroundColor: '#f2f2f2',
-        debug: false
+        debug: false,
+        verticalScroll: false,
     }
 
     constructor(props) {
@@ -64,6 +67,22 @@ class PinchZoomView extends Component {
 
     componentDidMount() {
         this.registerListeners()
+    }
+
+    getOffsetBoundary(size, scale) {
+        const { verticalScroll } = this.props
+        const maxOffsetX = ((size.width * scale) - size.width) / (scale * 2)
+        const maxOffsetY = ((size.height * scale) - size.height) / (scale * 2)
+        let additionalY = 0
+        if (verticalScroll) {
+            additionalY = this.refs.parent.firstElementChild.offsetHeight - size.height
+        }
+        return {
+            minX: -maxOffsetX,
+            maxX: maxOffsetX,
+            minY: -maxOffsetY - additionalY,
+            maxY: maxOffsetY,
+        }
     }
 
     mStartPoint
@@ -83,20 +102,26 @@ class PinchZoomView extends Component {
                 const { scale, x, y } = this.state
                 const { maxScale } = this.props
                 const average = (1 + maxScale) / 2
+                const size = {
+                    width: this.refs.root.offsetWidth,
+                    height: this.refs.root.offsetHeight,
+                }
                 if (scale < average) {
+                    const boundary = this.getOffsetBoundary(size, average)
                     this.setState({
                         ...this.state,
                         scale: average,
-                        x: (average < 1.01) ? 0 : x,
-                        y: (average < 1.01) ? 0 : y,
+                        x: between(boundary.minX, boundary.maxX, x),
+                        y: between(boundary.minY, boundary.maxY, y),
                     })
                 }
                 else {
+                    const boundary = this.getOffsetBoundary(size, 1)
                     this.setState({
                         ...this.state,
                         scale: 1,
-                        x: 0,
-                        y: 0,
+                        x: between(boundary.minX, boundary.maxX, x),
+                        y: between(boundary.minY, boundary.maxY, y),
                     })
                 }
                 return
@@ -131,20 +156,20 @@ class PinchZoomView extends Component {
                 scaleFactor = scale + ((translatePos(movePoint, size).x - translatePos(this.mStartPoint, size).x) / size.width)
             }
             scaleFactor = between(1, maxScale, scaleFactor)
+            const boundary = this.getOffsetBoundary(size, scaleFactor)
             this.setState({
                 ...this.state,
                 scale: scaleFactor,
-                x: (scaleFactor < 1.01) ? 0 : x,
-                y: (scaleFactor < 1.01) ? 0 : y,
+                x: between(boundary.minX, boundary.maxX, x),
+                y: between(boundary.minY, boundary.maxY, y),
             })
         } else {
-            const maxOffsetX = ((size.width * scale) - size.width) / (scale * 2)
-            const maxOffsetY = ((size.height * scale) - size.height) / (scale * 2)
             const last = this.mLastMovePoint ? this.mLastMovePoint : this.mStartPoint
+            const boundary = this.getOffsetBoundary(size, scale)
             this.setState({
                 ...this.state,
-                x: between(-maxOffsetX, maxOffsetX, this.state.x + movePoint.x - last.x),
-                y: between(-maxOffsetY, maxOffsetY, this.state.y + movePoint.y - last.y),
+                x: between(boundary.minX, boundary.maxX, x + movePoint.x - last.x),
+                y: between(boundary.minY, boundary.maxY, y + movePoint.y - last.y),
             })
             this.mLastMovePoint = movePoint
         }
@@ -152,6 +177,9 @@ class PinchZoomView extends Component {
 
     onTouchEnd() {
         this.mStartPoint = null
+        if (this.mLastMovePoint) {
+            this.mLastTimestamp = null
+        }
         this.mLastMovePoint = null
     }
 
@@ -220,7 +248,7 @@ class PinchZoomView extends Component {
                 <div style={this.getHolderStyle()}>
                     <div style={this.getContainerStyle()}>
                         <div style={this.getInnerStyle()}>
-                            <div style={autoPrefix(this.getContentStyle(displayData))}>
+                            <div ref="parent" style={autoPrefix(this.getContentStyle(displayData))}>
                                 {children}
                             </div>
                         </div>
