@@ -68,8 +68,40 @@ class PinchZoomView extends Component {
 
     mStartPoint
     mLastMovePoint
+    mLastTimestamp
     onTouchStart(e) {
         e.preventDefault()
+        if (!this.mLastTimestamp) {
+            this.mLastTimestamp = new Date().getTime()
+        }
+        else {
+            const newTimestamp = new Date().getTime()
+            if (newTimestamp - this.mLastTimestamp > 500) {
+                this.mLastTimestamp = newTimestamp
+            }
+            else {
+                const { scale, x, y } = this.state
+                const { maxScale } = this.props
+                const average = (1 + maxScale) / 2
+                if (scale < average) {
+                    this.setState({
+                        ...this.state,
+                        scale: average,
+                        x: (average < 1.01) ? 0 : x,
+                        y: (average < 1.01) ? 0 : y,
+                    })
+                }
+                else {
+                    this.setState({
+                        ...this.state,
+                        scale: 1,
+                        x: 0,
+                        y: 0,
+                    })
+                }
+                return
+            }
+        }
         this.mStartPoint = normalizeTouch(e)
     }
 
