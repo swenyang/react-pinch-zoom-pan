@@ -3,6 +3,20 @@ import s from 'react-prefixr'
 import {ReactPinchZoomPan} from './'
 
 class PinchView extends Component {
+    static propTypes = {
+        containerRatio: PropTypes.number,
+        maxScale: PropTypes.number,
+        children: PropTypes.element,
+        backgroundColor: PropTypes.string,
+        debug: PropTypes.bool
+    }
+
+    static defaultProps = {
+        maxScale: 2,
+        containerRatio: 100,
+        backgroundColor: '#f2f2f2',
+        debug: false
+    }
 
     getContainerStyle() {
         const { backgroundColor, containerRatio } = this.props
@@ -68,21 +82,6 @@ class PinchView extends Component {
             )}/>
         )
     }
-}
-
-PinchView.defaultProps = {
-    maxScale: 2,
-    containerRatio: 100,
-    backgroundColor: '#f2f2f2',
-    debug: false
-}
-
-PinchView.propTypes = {
-    containerRatio: PropTypes.number,
-    maxScale: PropTypes.number,
-    children: PropTypes.element,
-    backgroundColor: PropTypes.string,
-    debug: PropTypes.bool
 }
 
 export default PinchView

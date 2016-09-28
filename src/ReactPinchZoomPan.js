@@ -1,5 +1,4 @@
 import React, {Component, PropTypes} from 'react'
-import throttle from 'lodash.throttle'
 
 function isTouch() {
     return (('ontouchstart' in window) ||
@@ -19,10 +18,6 @@ function between(min, max, val) {
     return Math.min(max, Math.max(min, val))
 }
 
-function inverse(val) {
-    return val * -1
-}
-
 function normalizeTouch(e) {
     const p = isTouch() ? e.touches[0] : e
     return {
@@ -31,7 +26,23 @@ function normalizeTouch(e) {
     }
 }
 
+function translatePos(point, size) {
+    return {
+        x: (point.x - (size.width / 2)),
+        y: (point.y - (size.height / 2))
+    }
+}
+
 class ReactPinchZoomPan extends Component {
+    static defaultProps = {
+        maxScale: 2
+    }
+
+    static propTypes = {
+        render: PropTypes.func,
+        maxScale: PropTypes.number
+    }
+
     constructor(props) {
         super(props)
         this.onTouchStart = this.onTouchStart.bind(this)
@@ -44,47 +55,26 @@ class ReactPinchZoomPan extends Component {
         }
     }
 
-    resize() {
-        if (this.refs.root) {
-            const domNode = this.refs.root
-            this.setState({
-                ...this.state,
-                size: {
-                    width: domNode.offsetWidth,
-                    height: domNode.offsetHeight,
-                },
-            })
-        }
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('resize', this.resize)
-    }
-
     componentDidMount() {
-        this.handlePinch()
-        this.resize()
-        window.addEventListener('resize', throttle(() => this.resize(), 500))
+        this.registerListeners()
     }
 
     mStartPoint
+    mLastMovePoint
     onTouchStart(e) {
         e.preventDefault()
         this.mStartPoint = normalizeTouch(e)
     }
 
-    translatePos(point, size) {
-        return {
-            x: (point.x - (size.width / 2)),
-            y: (point.y - (size.height / 2))
-        }
-    }
-
     onTouchMove(e) {
-        if (!this.mStartPoint) {
+        if (!this.mStartPoint || !this.refs.root) {
             return
         }
-        const { size } = this.state
+        const domNode = this.refs.root
+        const size = {
+            width: domNode.offsetWidth,
+            height: domNode.offsetHeight,
+        }
 
         const { scale, x, y } = this.state
         const { maxScale } = this.props
@@ -92,12 +82,14 @@ class ReactPinchZoomPan extends Component {
 
         if (hasTwoTouchPoints(e)) {
             let scaleFactor
-            if (isTouch()) {
+            if (isTouch() && e.scale && false) {
                 scaleFactor = e.scale
-            } else {
-                scaleFactor = (movePoint.x < (size.width / 2)) ?
-                    scale + ((this.translatePos(this.mStartPoint, size).x - this.translatePos(movePoint, size).x) / size.width)
-                    : scale + ((this.translatePos(movePoint, size).x - this.translatePos(this.mStartPoint, size).x) / size.width)
+            }
+            else if (movePoint.x < (size.width / 2)) {
+                scaleFactor = scale + ((translatePos(this.mStartPoint, size).x - translatePos(movePoint, size).x) / size.width)
+            }
+            else {
+                scaleFactor = scale + ((translatePos(movePoint, size).x - translatePos(this.mStartPoint, size).x) / size.width)
             }
             scaleFactor = between(1, maxScale, scaleFactor)
             this.setState({
@@ -107,29 +99,31 @@ class ReactPinchZoomPan extends Component {
                 y: (scaleFactor < 1.01) ? 0 : y,
             })
         } else {
-            const scaleFactorX = ((size.width * scale) - size.width) / (maxScale * 2)
-            const scaleFactorY = ((size.height * scale) - size.height) / (maxScale * 2)
+            const maxOffsetX = ((size.width * scale) - size.width) / (scale * 2)
+            const maxOffsetY = ((size.height * scale) - size.height) / (scale * 2)
+            const last = this.mLastMovePoint ? this.mLastMovePoint : this.mStartPoint
             this.setState({
                 ...this.state,
-                x: between(inverse(scaleFactorX), scaleFactorX, movePoint.x - this.mStartPoint.x),
-                y: between(inverse(scaleFactorY), scaleFactorY, movePoint.y - this.mStartPoint.y)
+                x: between(-maxOffsetX, maxOffsetX, this.state.x + movePoint.x - last.x),
+                y: between(-maxOffsetY, maxOffsetY, this.state.y + movePoint.y - last.y),
             })
+            this.mLastMovePoint = movePoint
         }
     }
 
     onTouchEnd() {
         this.mStartPoint = null
+        this.mLastMovePoint = null
     }
 
-    handlePinch() {
-        const domNode = this.refs.root
-        domNode.addEventListener(isTouch() ? 'touchstart' : 'mousedown', this.onTouchStart)
+    registerListeners() {
+        this.refs.root.addEventListener(isTouch() ? 'touchstart' : 'mousedown', this.onTouchStart)
         window.addEventListener(isTouch() ? 'touchmove' : 'mousemove', this.onTouchMove)
         window.addEventListener(isTouch() ? 'touchend' : 'mouseup', this.onTouchEnd)
     }
 
     render() {
-        const {scale, x, y} = this.state
+        const { scale, x, y } = this.state
         return (
             <div ref='root'>
                 {this.props.render({
@@ -140,15 +134,6 @@ class ReactPinchZoomPan extends Component {
             </div>
         )
     }
-}
-
-ReactPinchZoomPan.defaultProps = {
-    maxScale: 2
-}
-
-ReactPinchZoomPan.propTypes = {
-    render: PropTypes.func,
-    maxScale: PropTypes.number
 }
 
 export default ReactPinchZoomPan
